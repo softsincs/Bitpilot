@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bidpilot_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bidpilot_db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=bidpilot-commercial-secret-key-2026-secure-jwt-token
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  # PostgreSQL 16 with pgvector Extension
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: bidpilot_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bidpilot_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  # Redis Queue
+  redis:
+    image: redis:7-alpine
+    container_name: bidpilot_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+  pgdata:
